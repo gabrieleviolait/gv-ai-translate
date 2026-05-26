@@ -1,0 +1,16 @@
+.gvait-floating{position:fixed;z-index:99999}
+.gvait-top-right{top:20px;right:20px}.gvait-top-left{top:20px;left:20px}.gvait-bottom-right{bottom:20px;right:20px}.gvait-bottom-left{bottom:20px;left:20px}
+.gvait-selector{font-family:inherit;font-size:14px}
+.gvait-trigger,.gvait-lang,.gvait-option{display:flex;align-items:center;gap:8px;text-decoration:none;background:#fff;color:#111;border:1px solid rgba(0,0,0,.12);border-radius:999px;padding:8px 12px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.gvait-dropdown{position:relative}.gvait-dropdown summary{cursor:pointer;list-style:none}.gvait-dropdown summary::-webkit-details-marker{display:none}
+.gvait-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:170px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.gvait-option{box-shadow:none;border:0;border-radius:12px;justify-content:space-between}.gvait-option:hover{background:#f3f4f6}
+.gvait-buttons{display:flex;gap:8px;flex-wrap:wrap}.gvait-lang.active,.gvait-option.active{font-weight:700}
+.gvait-flag{
+    width:20px;
+    height:15px;
+    object-fit:cover;
+    border-radius:2px;
+    display:inline-block;
+    vertical-align:middle;
+}
