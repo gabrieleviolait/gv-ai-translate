@@ -6,7 +6,7 @@ Requires PHP: 7.4
 Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Plugin URI: https://www.gabrieleviola.it
+Plugin URI: https://www.gabrieleviola.it/gv-ai-translate/
 Author: Gabriele Viola
 Author URI: https://www.gabrieleviola.it
 Tested up to: 6.8
