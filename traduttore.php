@@ -1,13 +1,15 @@
 <?php
 /**
- * Plugin Name: Traduttore WordPress - Gabriele Viola
+ * Plugin Name: GV AI Translate
  * Plugin URI: https://www.gabrieleviola.it
- * Description: Traduttore AI per WordPress con provider multipli, fallback, cache locale, selettore lingua e shortcode [traduttore_translate] (alias [gv_translate]).
+ * Description: Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
  * Version: 1.0.10
  * Author: Gabriele Viola
  * Author URI: https://www.gabrieleviola.it
  * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: gv-ai-translate
+ * Domain Path: /languages
  */
 
 if (!defined('ABSPATH')) {
@@ -67,13 +69,13 @@ final class GV_AI_Translate {
             'anthropic_model' => 'claude-3-5-haiku-latest',
             'google_api_key' => '',
             'google_model' => 'gemini-1.5-flash',
-            'provider_order' => 'groq,openai,anthropic,google,google_free',
+            'provider_order' => 'groq,openai,anthropic,google',
             'default_lang' => 'it',
             'languages' => 'it,en',
             'selector_style' => 'dropdown',
             'floating' => '1',
             'floating_position' => 'top-right',
-            'auto_translate' => '1',
+            'auto_translate' => '0',
             'cache_days' => 'forever',
             'max_text_nodes' => '120',
             'min_chars' => '2',
@@ -123,7 +125,7 @@ final class GV_AI_Translate {
         $out['google_model'] = sanitize_text_field(isset($input['google_model']) ? $input['google_model'] : 'gemini-1.5-flash');
 
         $allowed = array('groq', 'openai', 'anthropic', 'google', 'google_free');
-        $order_raw = strtolower(sanitize_text_field(isset($input['provider_order']) ? $input['provider_order'] : 'groq,openai,anthropic,google,google_free'));
+        $order_raw = strtolower(sanitize_text_field(isset($input['provider_order']) ? $input['provider_order'] : 'groq,openai,anthropic,google'));
         $raw_parts = explode(',', $order_raw);
         $parts = array();
         foreach ($raw_parts as $p) {
@@ -132,7 +134,7 @@ final class GV_AI_Translate {
                 $parts[] = $p;
             }
         }
-        $out['provider_order'] = !empty($parts) ? implode(',', $parts) : 'groq,openai,anthropic,google,google_free';
+        $out['provider_order'] = !empty($parts) ? implode(',', $parts) : 'groq,openai,anthropic,google';
 
         $out['default_lang'] = isset($input['default_lang']) ? strtolower(sanitize_key($input['default_lang'])) : 'it';
 
@@ -161,7 +163,13 @@ final class GV_AI_Translate {
     }
 
     public function admin_menu() {
-        add_options_page('Traduttore', 'Traduttore', 'manage_options', 'gv-ai-translate', array($this, 'settings_page'));
+        add_options_page(
+            __('GV AI Translate', 'gv-ai-translate'),
+            __('GV AI Translate', 'gv-ai-translate'),
+            'manage_options',
+            'gv-ai-translate',
+            array($this, 'settings_page')
+        );
     }
 
     public function maybe_clear_cache() {
@@ -197,62 +205,62 @@ final class GV_AI_Translate {
         $o = $this->get_options();
         ?>
         <div class="wrap">
-            <h1>Traduttore</h1>
+            <h1><?php echo esc_html__('GV AI Translate', 'gv-ai-translate'); ?></h1>
 
             <?php if (isset($_GET['cache_cleared'])) : ?>
-                <div class="notice notice-success"><p>Cache traduzioni svuotata correttamente.</p></div>
+                <div class="notice notice-success"><p><?php echo esc_html__('Translation cache cleared successfully.', 'gv-ai-translate'); ?></p></div>
             <?php endif; ?>
 
             <p>
                 <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=gv-ai-translate&traduttore_clear_cache=1'), 'traduttore_clear_cache')); ?>" class="button button-secondary">
-                    Svuota cache traduzioni
+                    <?php echo esc_html__('Clear translation cache', 'gv-ai-translate'); ?>
                 </a>
             </p>
 
             <form method="post" action="options.php">
                 <?php settings_fields('gvait_settings'); ?>
 
-                <h2>Provider AI e fallback</h2>
+                <h2><?php echo esc_html__('AI providers and fallback', 'gv-ai-translate'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row">Ordine provider</th>
+                        <th scope="row"><?php echo esc_html__('Provider order', 'gv-ai-translate'); ?></th>
                         <td>
                             <input type="text" name="<?php echo esc_attr(self::OPT); ?>[provider_order]" value="<?php echo esc_attr($o['provider_order']); ?>" class="regular-text">
-                            <p class="description">Esempio: <code>groq,openai,anthropic,google,google_free</code>. <code>google_free</code> è il fallback gratuito senza API key.</p>
+                            <p class="description"><?php echo wp_kses_post(__('Example: <code>groq,openai,anthropic,google</code>. Add <code>google_free</code> manually only if you explicitly want to use the unofficial Google Translate fallback without an API key.', 'gv-ai-translate')); ?></p>
                         </td>
                     </tr>
-                    <tr><th scope="row">Groq API key</th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[groq_api_key]" value="<?php echo esc_attr($o['groq_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row">Modello Groq</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[groq_model]" value="<?php echo esc_attr($o['groq_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row">OpenAI API key</th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[openai_api_key]" value="<?php echo esc_attr($o['openai_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row">Modello OpenAI</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[openai_model]" value="<?php echo esc_attr($o['openai_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row">Anthropic API key</th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[anthropic_api_key]" value="<?php echo esc_attr($o['anthropic_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row">Modello Anthropic</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[anthropic_model]" value="<?php echo esc_attr($o['anthropic_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row">Google Gemini API key</th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[google_api_key]" value="<?php echo esc_attr($o['google_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row">Modello Gemini</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[google_model]" value="<?php echo esc_attr($o['google_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Groq API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[groq_api_key]" value="<?php echo esc_attr($o['groq_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Groq model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[groq_model]" value="<?php echo esc_attr($o['groq_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('OpenAI API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[openai_api_key]" value="<?php echo esc_attr($o['openai_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('OpenAI model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[openai_model]" value="<?php echo esc_attr($o['openai_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Anthropic API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[anthropic_api_key]" value="<?php echo esc_attr($o['anthropic_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Anthropic model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[anthropic_model]" value="<?php echo esc_attr($o['anthropic_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Google Gemini API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[google_api_key]" value="<?php echo esc_attr($o['google_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Gemini model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[google_model]" value="<?php echo esc_attr($o['google_model']); ?>" class="regular-text"></td></tr>
                 </table>
 
-                <h2>Lingue e comportamento</h2>
+                <h2><?php echo esc_html__('Languages and behavior', 'gv-ai-translate'); ?></h2>
                 <table class="form-table" role="presentation">
-                    <tr><th scope="row">Lingua predefinita</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[default_lang]" value="<?php echo esc_attr($o['default_lang']); ?>" class="small-text"></td></tr>
-                    <tr><th scope="row">Lingue disponibili</th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[languages]" value="<?php echo esc_attr($o['languages']); ?>" class="regular-text"><p class="description">Separate da virgola, es: it,en.</p></td></tr>
-                    <tr><th scope="row">Stile selettore</th><td><select name="<?php echo esc_attr(self::OPT); ?>[selector_style]"><option value="dropdown" <?php selected($o['selector_style'], 'dropdown'); ?>>Dropdown</option><option value="buttons" <?php selected($o['selector_style'], 'buttons'); ?>>Bottoni</option></select></td></tr>
-                    <tr><th scope="row">Selettore floating</th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[floating]" value="1" <?php checked($o['floating'], '1'); ?>> Mostra automaticamente</label></td></tr>
-                    <tr><th scope="row">Posizione floating</th><td><select name="<?php echo esc_attr(self::OPT); ?>[floating_position]"><?php foreach (array('top-right','top-left','bottom-right','bottom-left') as $p) : ?><option value="<?php echo esc_attr($p); ?>" <?php selected($o['floating_position'], $p); ?>><?php echo esc_html($p); ?></option><?php endforeach; ?></select></td></tr>
-                    <tr><th scope="row">Auto-traduzione frontend</th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[auto_translate]" value="1" <?php checked($o['auto_translate'], '1'); ?>> Traduce automaticamente via AJAX. Non riscrive HTML/CSS/JS.</label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Default language', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[default_lang]" value="<?php echo esc_attr($o['default_lang']); ?>" class="small-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Available languages', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[languages]" value="<?php echo esc_attr($o['languages']); ?>" class="regular-text"><p class="description"><?php echo esc_html__('Comma-separated, for example: it,en.', 'gv-ai-translate'); ?></p></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Selector style', 'gv-ai-translate'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[selector_style]"><option value="dropdown" <?php selected($o['selector_style'], 'dropdown'); ?>><?php echo esc_html__('Dropdown', 'gv-ai-translate'); ?></option><option value="buttons" <?php selected($o['selector_style'], 'buttons'); ?>><?php echo esc_html__('Buttons', 'gv-ai-translate'); ?></option></select></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Floating selector', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[floating]" value="1" <?php checked($o['floating'], '1'); ?>> <?php echo esc_html__('Show automatically', 'gv-ai-translate'); ?></label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Floating position', 'gv-ai-translate'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[floating_position]"><?php foreach (array('top-right','top-left','bottom-right','bottom-left') as $p) : ?><option value="<?php echo esc_attr($p); ?>" <?php selected($o['floating_position'], $p); ?>><?php echo esc_html($p); ?></option><?php endforeach; ?></select></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Frontend auto-translation', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[auto_translate]" value="1" <?php checked($o['auto_translate'], '1'); ?>> <?php echo esc_html__('Enable frontend auto-translation. When enabled, visible page text may be sent to the configured translation providers.', 'gv-ai-translate'); ?></label></td></tr>
                     <tr>
-                        <th scope="row">Cache</th>
+                        <th scope="row"><?php echo esc_html__('Cache', 'gv-ai-translate'); ?></th>
                         <td>
                             <select name="<?php echo esc_attr(self::OPT); ?>[cache_days]">
-                                <option value="1" <?php selected($o['cache_days'], '1'); ?>>1 giorno</option>
-                                <option value="7" <?php selected($o['cache_days'], '7'); ?>>7 giorni</option>
-                                <option value="30" <?php selected($o['cache_days'], '30'); ?>>30 giorni</option>
-                                <option value="90" <?php selected($o['cache_days'], '90'); ?>>90 giorni</option>
-                                <option value="forever" <?php selected($o['cache_days'], 'forever'); ?>>Mai, cache permanente</option>
+                                <option value="1" <?php selected($o['cache_days'], '1'); ?>><?php echo esc_html__('1 day', 'gv-ai-translate'); ?></option>
+                                <option value="7" <?php selected($o['cache_days'], '7'); ?>><?php echo esc_html__('7 days', 'gv-ai-translate'); ?></option>
+                                <option value="30" <?php selected($o['cache_days'], '30'); ?>><?php echo esc_html__('30 days', 'gv-ai-translate'); ?></option>
+                                <option value="90" <?php selected($o['cache_days'], '90'); ?>><?php echo esc_html__('90 days', 'gv-ai-translate'); ?></option>
+                                <option value="forever" <?php selected($o['cache_days'], 'forever'); ?>><?php echo esc_html__('Never expire, persistent cache', 'gv-ai-translate'); ?></option>
                             </select>
                         </td>
                     </tr>
-                    <tr><th scope="row">Max testi per pagina</th><td><input type="number" name="<?php echo esc_attr(self::OPT); ?>[max_text_nodes]" value="<?php echo esc_attr($o['max_text_nodes']); ?>" min="20" max="500" class="small-text"></td></tr>
-                    <tr><th scope="row">Debug</th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[debug]" value="1" <?php checked($o['debug'], '1'); ?>> Aggiunge commenti diagnostici</label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Maximum texts per page', 'gv-ai-translate'); ?></th><td><input type="number" name="<?php echo esc_attr(self::OPT); ?>[max_text_nodes]" value="<?php echo esc_attr($o['max_text_nodes']); ?>" min="20" max="500" class="small-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Debug', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[debug]" value="1" <?php checked($o['debug'], '1'); ?>> <?php echo esc_html__('Add diagnostic comments', 'gv-ai-translate'); ?></label></td></tr>
                 </table>
 
                 <?php submit_button(); ?>
@@ -285,8 +293,7 @@ final class GV_AI_Translate {
         $license = plugin_dir_path(__FILE__) . 'LICENSE.txt';
         if (!file_exists($license)) {
             echo '<div class="notice notice-warning"><p>' .
-                'Licenza plugin mancante: si consiglia di includere il file <strong>LICENSE.txt</strong>. ' .
-                'Visita <a href="https://www.gabrieleviola.it" target="_blank" rel="noopener">www.gabrieleviola.it</a> per dettagli.' .
+                wp_kses_post(__('Plugin license file missing: include the <strong>LICENSE.txt</strong> file. Visit <a href="https://www.gabrieleviola.it" target="_blank" rel="noopener">www.gabrieleviola.it</a> for details.', 'gv-ai-translate')) .
                 '</p></div>';
         }
     }
@@ -507,10 +514,10 @@ final class GV_AI_Translate {
         $map = array(
             'it' => 'Italiano',
             'en' => 'English',
-            'fr' => 'Français',
-            'es' => 'Español',
+            'fr' => 'Francais',
+            'es' => 'Espanol',
             'de' => 'Deutsch',
-            'pt' => 'Português',
+            'pt' => 'Portugues',
         );
         return isset($map[$lang]) ? $map[$lang] : strtoupper($lang);
     }
