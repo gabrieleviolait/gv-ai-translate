@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: GV AI translate
+ * Plugin Name: GV AI Translate
  * Plugin URI: https://www.gabrieleviola.it
  * Description: Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
  * Version: 1.0.10

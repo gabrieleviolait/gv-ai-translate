@@ -1,4 +1,4 @@
-=== GV AI translate===
+=== GV AI Translate ===
 Contributors: gabrieleviola
 Tags: translation, ai translation, multilingual, language switcher, content translation
 Requires at least: 6.0
