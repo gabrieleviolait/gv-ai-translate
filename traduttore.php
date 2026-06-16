@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: GV AI Translate
+ * Plugin Name: Simple Translate 
  * Plugin URI: https://www.gabrieleviola.it
  * Description: Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
  * Version: 1.0.10
@@ -8,7 +8,7 @@
  * Author URI: https://www.gabrieleviola.it
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: gv-ai-translate
+ * Text Domain: simple-translate
  * Domain Path: /languages
  */
 
@@ -43,7 +43,6 @@ final class GV_AI_Translate {
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array($this, 'maybe_clear_cache'));
-        add_action('admin_notices', array($this, 'check_license_file'));
         add_action('admin_init', array($this, 'migrate_legacy_options'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
         add_shortcode('gv_translate', array($this, 'shortcode'));
@@ -286,18 +285,6 @@ final class GV_AI_Translate {
         }
     }
 
-    public function check_license_file() {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-        $license = plugin_dir_path(__FILE__) . 'LICENSE.txt';
-        if (!file_exists($license)) {
-            echo '<div class="notice notice-warning"><p>' .
-                wp_kses_post(__('Plugin license file missing: include the <strong>LICENSE.txt</strong> file. Visit <a href="https://www.gabrieleviola.it" target="_blank" rel="noopener">www.gabrieleviola.it</a> for details.', 'gv-ai-translate')) .
-                '</p></div>';
-        }
-    }
-
     public function enqueue_assets() {
         wp_enqueue_style('gvait-frontend', plugins_url('assets/css/frontend.css', __FILE__), array(), self::VERSION);
         wp_enqueue_script('gvait-frontend', plugins_url('assets/js/frontend.js', __FILE__), array(), self::VERSION, true);
@@ -526,18 +513,18 @@ final class GV_AI_Translate {
         // Accept both new and legacy nonces for backward compatibility
         $ok = check_ajax_referer('traduttore_translate_texts', 'nonce', false) || check_ajax_referer('gvait_translate_texts', 'nonce', false);
         if (!$ok) {
-            wp_send_json_error(array('message' => 'Nonce non valido.'), 403);
+            wp_send_json_error(array('message' => __('Invalid nonce.', 'gv-ai-translate')), 403);
         }
 
         $lang = isset($_POST['lang']) ? strtolower(sanitize_key(wp_unslash($_POST['lang']))) : '';
         if (!$lang || $lang === $this->default_lang || !in_array($lang, $this->languages(), true)) {
-            wp_send_json_error(array('message' => 'Lingua non valida.'), 400);
+            wp_send_json_error(array('message' => __('Invalid language.', 'gv-ai-translate')), 400);
         }
 
         $raw = isset($_POST['texts']) ? wp_unslash($_POST['texts']) : '[]';
         $texts = json_decode($raw, true);
         if (!is_array($texts)) {
-            wp_send_json_error(array('message' => 'Payload non valido.'), 400);
+            wp_send_json_error(array('message' => __('Invalid payload.', 'gv-ai-translate')), 400);
         }
 
         $max = intval($this->options['max_text_nodes']);
@@ -569,7 +556,7 @@ final class GV_AI_Translate {
 
         $translations = $this->translate_array_with_fallback($clean, $lang);
         if (!is_array($translations)) {
-            wp_send_json_error(array('message' => 'Traduzione non riuscita.'), 500);
+            wp_send_json_error(array('message' => __('Translation failed.', 'gv-ai-translate')), 500);
         }
 
         $ttl = ($this->options['cache_days'] === 'forever') ? 10 * YEAR_IN_SECONDS : max(1, intval($this->options['cache_days'])) * DAY_IN_SECONDS;
