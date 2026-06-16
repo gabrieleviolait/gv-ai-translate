@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Simple Translate 
+ * Plugin Name: GV AI translate
  * Plugin URI: https://www.gabrieleviola.it
  * Description: Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
  * Version: 1.0.10
@@ -8,7 +8,7 @@
  * Author URI: https://www.gabrieleviola.it
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: simple-translate
+ * Text Domain: gv-ai-translate
  * Domain Path: /languages
  */
 

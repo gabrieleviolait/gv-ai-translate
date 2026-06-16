@@ -1,4 +1,4 @@
-=== Simple Translate===
+=== GV AI translate===
 Contributors: gabrieleviola
 Tags: translation, ai translation, multilingual, language switcher, content translation
 Requires at least: 6.0
@@ -9,6 +9,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://www.gabrieleviola.it
 Author: Gabriele Viola
 Author URI: https://www.gabrieleviola.it
+Tested up to: 6.8
 
 Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
 
