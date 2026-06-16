@@ -9,7 +9,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://www.gabrieleviola.it/gv-ai-translate/
 Author: Gabriele Viola
 Author URI: https://www.gabrieleviola.it
-Tested up to: 6.8
+Tested up to: 7
 
 Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
 
