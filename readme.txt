@@ -1,5 +1,5 @@
-=== GV AI Translate ===
-Contributors: gviola103
+=== Traduttore WordPress ===
+Contributors: gabrieleviola
 Tags: translation, ai translation, multilingual, language switcher, content translation
 Requires at least: 6.0
 Tested up to: 6.6
@@ -98,3 +98,8 @@ Yes. Translations can be cached in WordPress transients according to the configu
 
 = 1.0.10 =
 * Initial public release.
+o per il testo completo della licenza.
+o per il testo completo della licenza.
+o per il testo completo della licenza.
+o per il testo completo della licenza.
+o per il testo completo della licenza.
