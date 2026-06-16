@@ -1,9 +1,11 @@
 <?php
 /**
- * Plugin Name: GV AI Translate
- * Description: Traduttore AI per WordPress con provider multipli, fallback, cache locale, selettore lingua e shortcode [gv_translate].
+ * Plugin Name: Traduttore WordPress - Gabriele Viola
+ * Plugin URI: https://www.gabrieleviola.it
+ * Description: Traduttore AI per WordPress con provider multipli, fallback, cache locale, selettore lingua e shortcode [traduttore_translate] (alias [gv_translate]).
  * Version: 1.0.10
  * Author: Gabriele Viola
+ * Author URI: https://www.gabrieleviola.it
  * License: GPLv2 or later
  * Text Domain: gv-ai-translate
  */
@@ -13,9 +15,9 @@ if (!defined('ABSPATH')) {
 }
 
 final class GV_AI_Translate {
-    const OPT = 'gvait_options';
-    const PARAM = 'gv_lang';
-    const COOKIE = 'gvait_lang';
+    const OPT = 'traduttore_options';
+    const PARAM = 'traduttore_lang';
+    const COOKIE = 'traduttore_lang';
     const MAX_TEXT_LENGTH = 600;
     const VERSION = '1.0.10';
 
@@ -39,11 +41,18 @@ final class GV_AI_Translate {
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array($this, 'maybe_clear_cache'));
+        add_action('admin_notices', array($this, 'check_license_file'));
+        add_action('admin_init', array($this, 'migrate_legacy_options'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
         add_shortcode('gv_translate', array($this, 'shortcode'));
+        // New shortcode name for clarity; keep old one as alias for backward compatibility
+        add_shortcode('traduttore_translate', array($this, 'shortcode'));
         add_action('wp_footer', array($this, 'floating_selector'));
         add_action('wp_ajax_gvait_translate_texts', array($this, 'ajax_translate_texts'));
         add_action('wp_ajax_nopriv_gvait_translate_texts', array($this, 'ajax_translate_texts'));
+        // New AJAX action name; keep old ones for backward compatibility
+        add_action('wp_ajax_traduttore_translate_texts', array($this, 'ajax_translate_texts'));
+        add_action('wp_ajax_nopriv_traduttore_translate_texts', array($this, 'ajax_translate_texts'));
         add_action('init', array($this, 'maybe_redirect_clean_url'));
         add_action('init', array($this, 'maybe_disable_page_cache'), 1);
     }
@@ -71,7 +80,11 @@ final class GV_AI_Translate {
             'debug' => '0',
         );
 
+        // Try new option key first, fall back to legacy for upgrades
         $saved = get_option(self::OPT, array());
+        if (empty($saved)) {
+            $saved = get_option('gvait_options', array());
+        }
         if (!is_array($saved)) {
             $saved = array();
         }
@@ -148,22 +161,30 @@ final class GV_AI_Translate {
     }
 
     public function admin_menu() {
-        add_options_page('GV AI Translate', 'GV AI Translate', 'manage_options', 'gv-ai-translate', array($this, 'settings_page'));
+        add_options_page('Traduttore', 'Traduttore', 'manage_options', 'gv-ai-translate', array($this, 'settings_page'));
     }
 
     public function maybe_clear_cache() {
         if (!current_user_can('manage_options')) {
             return;
         }
-        if (!isset($_GET['gvait_clear_cache'])) {
+        // support both legacy and new clear-cache query param
+        if (!isset($_GET['gvait_clear_cache']) && !isset($_GET['traduttore_clear_cache'])) {
             return;
         }
 
-        check_admin_referer('gvait_clear_cache');
+        if (isset($_GET['traduttore_clear_cache'])) {
+            check_admin_referer('traduttore_clear_cache');
+        } else {
+            check_admin_referer('gvait_clear_cache');
+        }
 
         global $wpdb;
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_gvait_%'");
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_gvait_%'");
+        // also clean transients created with new prefix
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_traduttore_%'");
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_traduttore_%'");
 
         wp_safe_redirect(admin_url('options-general.php?page=gv-ai-translate&cache_cleared=1'));
         exit;
@@ -176,14 +197,14 @@ final class GV_AI_Translate {
         $o = $this->get_options();
         ?>
         <div class="wrap">
-            <h1>GV AI Translate</h1>
+            <h1>Traduttore</h1>
 
             <?php if (isset($_GET['cache_cleared'])) : ?>
                 <div class="notice notice-success"><p>Cache traduzioni svuotata correttamente.</p></div>
             <?php endif; ?>
 
             <p>
-                <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=gv-ai-translate&gvait_clear_cache=1'), 'gvait_clear_cache')); ?>" class="button button-secondary">
+                <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=gv-ai-translate&traduttore_clear_cache=1'), 'traduttore_clear_cache')); ?>" class="button button-secondary">
                     Svuota cache traduzioni
                 </a>
             </p>
@@ -240,12 +261,44 @@ final class GV_AI_Translate {
         <?php
     }
 
+    public function migrate_legacy_options() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $new = get_option(self::OPT, false);
+        if ($new === false || $new === array()) {
+            $legacy = get_option('gvait_options', false);
+            if (is_array($legacy) && !empty($legacy)) {
+                // Copy legacy options into new key without deleting legacy key
+                update_option(self::OPT, $legacy);
+                // refresh $this->options in memory
+                $this->options = wp_parse_args($legacy, $this->get_options());
+            }
+        }
+    }
+
+    public function check_license_file() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        $license = plugin_dir_path(__FILE__) . 'LICENSE.txt';
+        if (!file_exists($license)) {
+            echo '<div class="notice notice-warning"><p>' .
+                'Licenza plugin mancante: si consiglia di includere il file <strong>LICENSE.txt</strong>. ' .
+                'Visita <a href="https://www.gabrieleviola.it" target="_blank" rel="noopener">www.gabrieleviola.it</a> per dettagli.' .
+                '</p></div>';
+        }
+    }
+
     public function enqueue_assets() {
         wp_enqueue_style('gvait-frontend', plugins_url('assets/css/frontend.css', __FILE__), array(), self::VERSION);
         wp_enqueue_script('gvait-frontend', plugins_url('assets/js/frontend.js', __FILE__), array(), self::VERSION, true);
         wp_add_inline_script('gvait-frontend', 'window.GVAIT_FRONTEND = ' . wp_json_encode(array(
             'param' => self::PARAM,
             'cookie' => self::COOKIE,
+            'paramLegacy' => 'gv_lang',
+            'cookieLegacy' => 'gvait_lang',
             'currentLang' => $this->current_lang,
             'defaultLang' => $this->default_lang,
             'languages' => $this->languages(),
@@ -256,7 +309,10 @@ final class GV_AI_Translate {
             wp_add_inline_script('gvait-ajax-translate', 'window.GVAIT_TRANSLATE = ' . wp_json_encode(array(
                 'enabled' => true,
                 'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('gvait_translate_texts'),
+                'nonce' => wp_create_nonce('traduttore_translate_texts'),
+                'nonceLegacy' => wp_create_nonce('gvait_translate_texts'),
+                'ajaxAction' => 'traduttore_translate_texts',
+                'ajaxActionLegacy' => 'gvait_translate_texts',
                 'lang' => $this->current_lang,
                 'defaultLang' => $this->default_lang,
                 'maxNodes' => intval($this->options['max_text_nodes']),
@@ -279,16 +335,26 @@ final class GV_AI_Translate {
 
         // Fonte unica ufficiale: ?gv_lang=xx. Accettiamo solo questo parametro.
         // I vecchi parametri lang/gt_lang/googtrans vengono rimossi in maybe_redirect_clean_url().
-        if (isset($_GET[self::PARAM])) {
-            $lang = strtolower(sanitize_key(wp_unslash($_GET[self::PARAM])));
+        // Accept both new and legacy query parameter for upgrades.
+        if (isset($_GET[self::PARAM]) || isset($_GET['gv_lang'])) {
+            $rawLang = isset($_GET[self::PARAM]) ? wp_unslash($_GET[self::PARAM]) : wp_unslash($_GET['gv_lang']);
+            $lang = strtolower(sanitize_key($rawLang));
             if (in_array($lang, $langs, true)) {
                 $this->set_language_cookie($lang);
                 return $lang;
             }
         }
 
+        // Support legacy cookie name as well for existing installs
+        $cookie_lang = '';
         if (!empty($_COOKIE[self::COOKIE])) {
-            $lang = strtolower(sanitize_key(wp_unslash($_COOKIE[self::COOKIE])));
+            $cookie_lang = wp_unslash($_COOKIE[self::COOKIE]);
+        } elseif (!empty($_COOKIE['gvait_lang'])) {
+            $cookie_lang = wp_unslash($_COOKIE['gvait_lang']);
+        }
+
+        if ($cookie_lang !== '') {
+            $lang = strtolower(sanitize_key($cookie_lang));
             if (in_array($lang, $langs, true)) {
                 if ($lang === $this->default_lang) {
                     $this->set_language_cookie($lang);
@@ -325,7 +391,11 @@ final class GV_AI_Translate {
             return;
         }
 
-        if (isset($_GET[self::PARAM]) || !empty($_COOKIE[self::COOKIE])) {
+        // Disable page caching when language param/cookie is present (support legacy names too)
+        $has_param = isset($_GET[self::PARAM]) || isset($_GET['gv_lang']);
+        $has_cookie = !empty($_COOKIE[self::COOKIE]) || !empty($_COOKIE['gvait_lang']);
+
+        if ($has_param || $has_cookie) {
             if (!defined('DONOTCACHEPAGE')) {
                 define('DONOTCACHEPAGE', true);
             }
@@ -342,7 +412,8 @@ final class GV_AI_Translate {
         if (is_admin() || wp_doing_ajax()) {
             return;
         }
-        if (!isset($_GET[self::PARAM])) {
+        // Only attempt cleanup if a language param (new or legacy) is present
+        if (!isset($_GET[self::PARAM]) && !isset($_GET['gv_lang'])) {
             return;
         }
 
@@ -363,17 +434,18 @@ final class GV_AI_Translate {
 
     public function shortcode() {
         $langs = $this->languages();
-        $classes = 'gvait-selector gvait-' . sanitize_html_class($this->options['selector_style']);
+        $style_class = sanitize_html_class($this->options['selector_style']);
+        $classes = 'gvait-selector traduttore-selector gvait-' . $style_class . ' traduttore-' . $style_class;
 
         ob_start();
-        echo '<div class="' . esc_attr($classes) . '" translate="no" data-gvait-no-translate="1">';
+        echo '<div class="' . esc_attr($classes) . '" translate="no" data-gvait-no-translate="1" data-traduttore-no-translate="1">';
 
         if ($this->options['selector_style'] === 'buttons') {
             foreach ($langs as $lang) {
                 $active = ($lang === $this->current_lang) ? ' active' : '';
-                echo '<a class="gvait-lang' . esc_attr($active) . '" href="' . esc_url($this->clean_lang_url($lang)) . '">';
+                echo '<a class="gvait-lang traduttore-lang' . esc_attr($active) . '" href="' . esc_url($this->clean_lang_url($lang)) . '">';
                 echo $this->flag_markup($lang);
-                echo '<span class="gvait-lang-code">' . esc_html(strtoupper($lang)) . '</span>';
+                echo '<span class="gvait-lang-code traduttore-lang-code">' . esc_html(strtoupper($lang)) . '</span>';
                 echo '</a>';
             }
         } else {
@@ -386,10 +458,10 @@ final class GV_AI_Translate {
             echo '<div class="gvait-menu" role="list">';
             foreach ($langs as $lang) {
                 $active = ($lang === $this->current_lang) ? ' active' : '';
-                echo '<a class="gvait-option' . esc_attr($active) . '" href="' . esc_url($this->clean_lang_url($lang)) . '">';
+                echo '<a class="gvait-option traduttore-option' . esc_attr($active) . '" href="' . esc_url($this->clean_lang_url($lang)) . '">';
                 echo $this->flag_markup($lang);
-                echo '<span class="gvait-option-label">' . esc_html($this->lang_label($lang)) . '</span>';
-                echo '<span class="gvait-option-code">' . esc_html(strtoupper($lang)) . '</span>';
+                echo '<span class="gvait-option-label traduttore-option-label">' . esc_html($this->lang_label($lang)) . '</span>';
+                echo '<span class="gvait-option-code traduttore-option-code">' . esc_html(strtoupper($lang)) . '</span>';
                 echo '</a>';
             }
             echo '</div>';
@@ -444,7 +516,11 @@ final class GV_AI_Translate {
     }
 
     public function ajax_translate_texts() {
-        check_ajax_referer('gvait_translate_texts', 'nonce');
+        // Accept both new and legacy nonces for backward compatibility
+        $ok = check_ajax_referer('traduttore_translate_texts', 'nonce', false) || check_ajax_referer('gvait_translate_texts', 'nonce', false);
+        if (!$ok) {
+            wp_send_json_error(array('message' => 'Nonce non valido.'), 403);
+        }
 
         $lang = isset($_POST['lang']) ? strtolower(sanitize_key(wp_unslash($_POST['lang']))) : '';
         if (!$lang || $lang === $this->default_lang || !in_array($lang, $this->languages(), true)) {
@@ -473,8 +549,13 @@ final class GV_AI_Translate {
             wp_send_json_success(array('translations' => array()));
         }
 
-        $cache_key = 'gvait_ajax_' . md5($lang . '|' . wp_json_encode($clean));
-        $cached = get_transient($cache_key);
+        $hash = md5($lang . '|' . wp_json_encode($clean));
+        $cache_key_new = 'traduttore_ajax_' . $hash;
+        $cache_key_old = 'gvait_ajax_' . $hash;
+        $cached = get_transient($cache_key_new);
+        if ($cached === false) {
+            $cached = get_transient($cache_key_old);
+        }
         if (is_array($cached)) {
             wp_send_json_success(array('translations' => $cached, 'cached' => true));
         }
@@ -484,11 +565,10 @@ final class GV_AI_Translate {
             wp_send_json_error(array('message' => 'Traduzione non riuscita.'), 500);
         }
 
-        if ($this->options['cache_days'] === 'forever') {
-            set_transient($cache_key, $translations, 10 * YEAR_IN_SECONDS);
-        } else {
-            set_transient($cache_key, $translations, max(1, intval($this->options['cache_days'])) * DAY_IN_SECONDS);
-        }
+        $ttl = ($this->options['cache_days'] === 'forever') ? 10 * YEAR_IN_SECONDS : max(1, intval($this->options['cache_days'])) * DAY_IN_SECONDS;
+        set_transient($cache_key_new, $translations, $ttl);
+        // also set legacy key for upgrades
+        set_transient($cache_key_old, $translations, $ttl);
 
         wp_send_json_success(array('translations' => $translations, 'cached' => false));
     }

@@ -1,7 +1,7 @@
 (function(){
   var config = window.GVAIT_FRONTEND || {};
-  var PARAM = config.param || 'gv_lang';
-  var COOKIE = config.cookie || 'gvait_lang';
+  var PARAM = config.param || config.paramLegacy || 'gv_lang';
+  var COOKIE = config.cookie || config.cookieLegacy || 'gvait_lang';
   var DEFAULT_LANG = cleanLang(config.defaultLang) || 'it';
   var LANGUAGES = [];
 
@@ -75,7 +75,7 @@
 
   function isProtected(el){
     while (el && el !== document) {
-      if (el.matches && el.matches('[data-gvait-no-translate], .gvait-selector')) return true;
+      if (el.matches && (el.matches('[data-gvait-no-translate]') || el.matches('[data-traduttore-no-translate]') || el.matches('.gvait-selector') || el.matches('.traduttore-selector'))) return true;
       el = el.parentElement;
     }
     return false;
@@ -97,8 +97,15 @@
       u.searchParams.delete('lang');
       u.searchParams.delete('gt_lang');
       u.searchParams.delete('googtrans');
-      if (lang && lang !== DEFAULT_LANG) u.searchParams.set(PARAM, lang);
-      else u.searchParams.delete(PARAM);
+      if (lang && lang !== DEFAULT_LANG) {
+        u.searchParams.set(PARAM, lang);
+        // also set legacy param for safety
+        if (PARAM === 'traduttore_lang') u.searchParams.set('gv_lang', lang);
+      }
+      else {
+        u.searchParams.delete(PARAM);
+        u.searchParams.delete('gv_lang');
+      }
       return u.toString();
     } catch(e) { return url; }
   }

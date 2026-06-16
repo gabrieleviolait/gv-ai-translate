@@ -14,7 +14,7 @@
 
   function skipParent(el){
     if (!el) return true;
-    return !!closest(el, 'script,style,noscript,svg,canvas,textarea,input,select,option,code,pre,[translate="no"],[data-gvait-no-translate],.gvait-selector,.gvait-no-translate,#wpadminbar');
+    return !!closest(el, 'script,style,noscript,svg,canvas,textarea,input,select,option,code,pre,[translate="no"],[data-gvait-no-translate],[data-traduttore-no-translate],.gvait-selector,.traduttore-selector,.gvait-no-translate,.traduttore-no-translate,#wpadminbar');
   }
 
   function shouldSkipText(t){
@@ -68,8 +68,10 @@
     if (!data.texts.length) return;
 
     var body = new URLSearchParams();
-    body.append('action', 'gvait_translate_texts');
-    body.append('nonce', config.nonce);
+    var action = config.ajaxAction || config.ajaxActionLegacy || 'gvait_translate_texts';
+    var nonce = config.nonce || config.nonceLegacy || '';
+    body.append('action', action);
+    body.append('nonce', nonce);
     body.append('lang', config.lang);
     body.append('texts', JSON.stringify(data.texts));
 
