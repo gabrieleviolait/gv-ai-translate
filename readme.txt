@@ -1,21 +1,21 @@
-=== GV AI Translate ===
-Contributors: gabrieleviola
+=== Gabriele Viola AI Language Switcher ===
+Contributors: raptorazgriz
 Tags: translation, ai translation, multilingual, language switcher, content translation
 Requires at least: 6.0
 Requires PHP: 7.4
 Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Plugin URI: https://www.gabrieleviola.it/gv-ai-translate/
+Plugin URI: https://www.gabrieleviola.it/gabriele-viola-ai-language-switcher/
 Author: Gabriele Viola
 Author URI: https://www.gabrieleviola.it
-Tested up to: 7
+Tested up to: 7.0
 
 Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
 
 == Description ==
 
-GV AI Translate adds a configurable language selector to WordPress and can translate visible frontend text through selected AI translation providers.
+Gabriele Viola AI Language Switcher adds a configurable language selector to WordPress and can translate visible frontend text through selected AI translation providers.
 
 Features include:
 
@@ -36,8 +36,8 @@ This plugin can connect to external translation and AI services only when config
 Depending on the configured provider order, the plugin may send visible page text strings, source language, target language and model settings to one or more of the following services:
 
 * Groq API - used for AI translation when a Groq API key is configured.
-  Terms: https://groq.com/terms/
-  Privacy: https://groq.com/privacy-policy/
+  Terms: https://groq.com/terms-of-use
+  Privacy: https://groq.com/privacy-policy
 
 * OpenAI API - used for AI translation when an OpenAI API key is configured.
   Terms: https://openai.com/policies/terms-of-use/
@@ -60,9 +60,9 @@ The plugin does not send content to these services unless translation is request
 
 == Installation ==
 
-1. Upload the plugin files to the `/wp-content/plugins/gv-ai-translate` directory, or install the plugin through the WordPress plugins screen.
+1. Upload the plugin files to the `/wp-content/plugins/gabriele-viola-ai-language-switcher` directory, or install the plugin through the WordPress plugins screen.
 2. Activate the plugin through the Plugins screen in WordPress.
-3. Go to Settings > GV AI Translate.
+3. Go to Settings > Gabriele Viola AI Language Switcher.
 4. Configure available languages, provider order and any API keys you want to use.
 5. Add `[traduttore_translate]` where you want to show the selector, or enable the floating selector.
 6. Enable frontend auto-translation only if you want visible page text to be sent to the configured providers for translation.

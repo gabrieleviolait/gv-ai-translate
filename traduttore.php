@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: GV AI Translate
- * Plugin URI: https://www.gabrieleviola.it/gv-ai-translate/
+ * Plugin Name: Gabriele Viola AI Language Switcher
+ * Plugin URI: https://www.gabrieleviola.it/gabriele-viola-ai-language-switcher/
  * Description: Adds an AI-powered language selector and frontend text translation with configurable providers and local cache.
  * Version: 1.0.10
  * Author: Gabriele Viola
  * Author URI: https://www.gabrieleviola.it
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: gv-ai-translate
+ * Text Domain: gabriele-viola-ai-language-switcher
  * Domain Path: /languages
  */
 
@@ -163,10 +163,10 @@ final class GV_AI_Translate {
 
     public function admin_menu() {
         add_options_page(
-            __('GV AI Translate', 'gv-ai-translate'),
-            __('GV AI Translate', 'gv-ai-translate'),
+            __('Gabriele Viola AI Language Switcher', 'gabriele-viola-ai-language-switcher'),
+            __('Gabriele Viola AI Language Switcher', 'gabriele-viola-ai-language-switcher'),
             'manage_options',
-            'gv-ai-translate',
+            'gabriele-viola-ai-language-switcher',
             array($this, 'settings_page')
         );
     }
@@ -193,7 +193,7 @@ final class GV_AI_Translate {
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_traduttore_%'");
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_traduttore_%'");
 
-        wp_safe_redirect(admin_url('options-general.php?page=gv-ai-translate&cache_cleared=1'));
+        wp_safe_redirect(admin_url('options-general.php?page=gabriele-viola-ai-language-switcher&cache_cleared=1'));
         exit;
     }
 
@@ -204,62 +204,62 @@ final class GV_AI_Translate {
         $o = $this->get_options();
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html__('GV AI Translate', 'gv-ai-translate'); ?></h1>
+            <h1><?php echo esc_html__('Gabriele Viola AI Language Switcher', 'gabriele-viola-ai-language-switcher'); ?></h1>
 
             <?php if (isset($_GET['cache_cleared'])) : ?>
-                <div class="notice notice-success"><p><?php echo esc_html__('Translation cache cleared successfully.', 'gv-ai-translate'); ?></p></div>
+                <div class="notice notice-success"><p><?php echo esc_html__('Translation cache cleared successfully.', 'gabriele-viola-ai-language-switcher'); ?></p></div>
             <?php endif; ?>
 
             <p>
-                <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=gv-ai-translate&traduttore_clear_cache=1'), 'traduttore_clear_cache')); ?>" class="button button-secondary">
-                    <?php echo esc_html__('Clear translation cache', 'gv-ai-translate'); ?>
+                <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=gabriele-viola-ai-language-switcher&traduttore_clear_cache=1'), 'traduttore_clear_cache')); ?>" class="button button-secondary">
+                    <?php echo esc_html__('Clear translation cache', 'gabriele-viola-ai-language-switcher'); ?>
                 </a>
             </p>
 
             <form method="post" action="options.php">
                 <?php settings_fields('gvait_settings'); ?>
 
-                <h2><?php echo esc_html__('AI providers and fallback', 'gv-ai-translate'); ?></h2>
+                <h2><?php echo esc_html__('AI providers and fallback', 'gabriele-viola-ai-language-switcher'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php echo esc_html__('Provider order', 'gv-ai-translate'); ?></th>
+                        <th scope="row"><?php echo esc_html__('Provider order', 'gabriele-viola-ai-language-switcher'); ?></th>
                         <td>
                             <input type="text" name="<?php echo esc_attr(self::OPT); ?>[provider_order]" value="<?php echo esc_attr($o['provider_order']); ?>" class="regular-text">
-                            <p class="description"><?php echo wp_kses_post(__('Example: <code>groq,openai,anthropic,google</code>. Add <code>google_free</code> manually only if you explicitly want to use the unofficial Google Translate fallback without an API key.', 'gv-ai-translate')); ?></p>
+                            <p class="description"><?php echo wp_kses_post(__('Example: <code>groq,openai,anthropic,google</code>. Add <code>google_free</code> manually only if you explicitly want to use the unofficial Google Translate fallback without an API key.', 'gabriele-viola-ai-language-switcher')); ?></p>
                         </td>
                     </tr>
-                    <tr><th scope="row"><?php echo esc_html__('Groq API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[groq_api_key]" value="<?php echo esc_attr($o['groq_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Groq model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[groq_model]" value="<?php echo esc_attr($o['groq_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('OpenAI API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[openai_api_key]" value="<?php echo esc_attr($o['openai_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('OpenAI model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[openai_model]" value="<?php echo esc_attr($o['openai_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Anthropic API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[anthropic_api_key]" value="<?php echo esc_attr($o['anthropic_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Anthropic model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[anthropic_model]" value="<?php echo esc_attr($o['anthropic_model']); ?>" class="regular-text"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Google Gemini API key', 'gv-ai-translate'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[google_api_key]" value="<?php echo esc_attr($o['google_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Gemini model', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[google_model]" value="<?php echo esc_attr($o['google_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Groq API key', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[groq_api_key]" value="<?php echo esc_attr($o['groq_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Groq model', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[groq_model]" value="<?php echo esc_attr($o['groq_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('OpenAI API key', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[openai_api_key]" value="<?php echo esc_attr($o['openai_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('OpenAI model', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[openai_model]" value="<?php echo esc_attr($o['openai_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Anthropic API key', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[anthropic_api_key]" value="<?php echo esc_attr($o['anthropic_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Anthropic model', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[anthropic_model]" value="<?php echo esc_attr($o['anthropic_model']); ?>" class="regular-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Google Gemini API key', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[google_api_key]" value="<?php echo esc_attr($o['google_api_key']); ?>" class="regular-text" autocomplete="off"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Gemini model', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[google_model]" value="<?php echo esc_attr($o['google_model']); ?>" class="regular-text"></td></tr>
                 </table>
 
-                <h2><?php echo esc_html__('Languages and behavior', 'gv-ai-translate'); ?></h2>
+                <h2><?php echo esc_html__('Languages and behavior', 'gabriele-viola-ai-language-switcher'); ?></h2>
                 <table class="form-table" role="presentation">
-                    <tr><th scope="row"><?php echo esc_html__('Default language', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[default_lang]" value="<?php echo esc_attr($o['default_lang']); ?>" class="small-text"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Available languages', 'gv-ai-translate'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[languages]" value="<?php echo esc_attr($o['languages']); ?>" class="regular-text"><p class="description"><?php echo esc_html__('Comma-separated, for example: it,en.', 'gv-ai-translate'); ?></p></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Selector style', 'gv-ai-translate'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[selector_style]"><option value="dropdown" <?php selected($o['selector_style'], 'dropdown'); ?>><?php echo esc_html__('Dropdown', 'gv-ai-translate'); ?></option><option value="buttons" <?php selected($o['selector_style'], 'buttons'); ?>><?php echo esc_html__('Buttons', 'gv-ai-translate'); ?></option></select></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Floating selector', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[floating]" value="1" <?php checked($o['floating'], '1'); ?>> <?php echo esc_html__('Show automatically', 'gv-ai-translate'); ?></label></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Floating position', 'gv-ai-translate'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[floating_position]"><?php foreach (array('top-right','top-left','bottom-right','bottom-left') as $p) : ?><option value="<?php echo esc_attr($p); ?>" <?php selected($o['floating_position'], $p); ?>><?php echo esc_html($p); ?></option><?php endforeach; ?></select></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Frontend auto-translation', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[auto_translate]" value="1" <?php checked($o['auto_translate'], '1'); ?>> <?php echo esc_html__('Enable frontend auto-translation. When enabled, visible page text may be sent to the configured translation providers.', 'gv-ai-translate'); ?></label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Default language', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[default_lang]" value="<?php echo esc_attr($o['default_lang']); ?>" class="small-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Available languages', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[languages]" value="<?php echo esc_attr($o['languages']); ?>" class="regular-text"><p class="description"><?php echo esc_html__('Comma-separated, for example: it,en.', 'gabriele-viola-ai-language-switcher'); ?></p></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Selector style', 'gabriele-viola-ai-language-switcher'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[selector_style]"><option value="dropdown" <?php selected($o['selector_style'], 'dropdown'); ?>><?php echo esc_html__('Dropdown', 'gabriele-viola-ai-language-switcher'); ?></option><option value="buttons" <?php selected($o['selector_style'], 'buttons'); ?>><?php echo esc_html__('Buttons', 'gabriele-viola-ai-language-switcher'); ?></option></select></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Floating selector', 'gabriele-viola-ai-language-switcher'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[floating]" value="1" <?php checked($o['floating'], '1'); ?>> <?php echo esc_html__('Show automatically', 'gabriele-viola-ai-language-switcher'); ?></label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Floating position', 'gabriele-viola-ai-language-switcher'); ?></th><td><select name="<?php echo esc_attr(self::OPT); ?>[floating_position]"><?php foreach (array('top-right','top-left','bottom-right','bottom-left') as $p) : ?><option value="<?php echo esc_attr($p); ?>" <?php selected($o['floating_position'], $p); ?>><?php echo esc_html($p); ?></option><?php endforeach; ?></select></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Frontend auto-translation', 'gabriele-viola-ai-language-switcher'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[auto_translate]" value="1" <?php checked($o['auto_translate'], '1'); ?>> <?php echo esc_html__('Enable frontend auto-translation. When enabled, visible page text may be sent to the configured translation providers.', 'gabriele-viola-ai-language-switcher'); ?></label></td></tr>
                     <tr>
-                        <th scope="row"><?php echo esc_html__('Cache', 'gv-ai-translate'); ?></th>
+                        <th scope="row"><?php echo esc_html__('Cache', 'gabriele-viola-ai-language-switcher'); ?></th>
                         <td>
                             <select name="<?php echo esc_attr(self::OPT); ?>[cache_days]">
-                                <option value="1" <?php selected($o['cache_days'], '1'); ?>><?php echo esc_html__('1 day', 'gv-ai-translate'); ?></option>
-                                <option value="7" <?php selected($o['cache_days'], '7'); ?>><?php echo esc_html__('7 days', 'gv-ai-translate'); ?></option>
-                                <option value="30" <?php selected($o['cache_days'], '30'); ?>><?php echo esc_html__('30 days', 'gv-ai-translate'); ?></option>
-                                <option value="90" <?php selected($o['cache_days'], '90'); ?>><?php echo esc_html__('90 days', 'gv-ai-translate'); ?></option>
-                                <option value="forever" <?php selected($o['cache_days'], 'forever'); ?>><?php echo esc_html__('Never expire, persistent cache', 'gv-ai-translate'); ?></option>
+                                <option value="1" <?php selected($o['cache_days'], '1'); ?>><?php echo esc_html__('1 day', 'gabriele-viola-ai-language-switcher'); ?></option>
+                                <option value="7" <?php selected($o['cache_days'], '7'); ?>><?php echo esc_html__('7 days', 'gabriele-viola-ai-language-switcher'); ?></option>
+                                <option value="30" <?php selected($o['cache_days'], '30'); ?>><?php echo esc_html__('30 days', 'gabriele-viola-ai-language-switcher'); ?></option>
+                                <option value="90" <?php selected($o['cache_days'], '90'); ?>><?php echo esc_html__('90 days', 'gabriele-viola-ai-language-switcher'); ?></option>
+                                <option value="forever" <?php selected($o['cache_days'], 'forever'); ?>><?php echo esc_html__('Never expire, persistent cache', 'gabriele-viola-ai-language-switcher'); ?></option>
                             </select>
                         </td>
                     </tr>
-                    <tr><th scope="row"><?php echo esc_html__('Maximum texts per page', 'gv-ai-translate'); ?></th><td><input type="number" name="<?php echo esc_attr(self::OPT); ?>[max_text_nodes]" value="<?php echo esc_attr($o['max_text_nodes']); ?>" min="20" max="500" class="small-text"></td></tr>
-                    <tr><th scope="row"><?php echo esc_html__('Debug', 'gv-ai-translate'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[debug]" value="1" <?php checked($o['debug'], '1'); ?>> <?php echo esc_html__('Add diagnostic comments', 'gv-ai-translate'); ?></label></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Maximum texts per page', 'gabriele-viola-ai-language-switcher'); ?></th><td><input type="number" name="<?php echo esc_attr(self::OPT); ?>[max_text_nodes]" value="<?php echo esc_attr($o['max_text_nodes']); ?>" min="20" max="500" class="small-text"></td></tr>
+                    <tr><th scope="row"><?php echo esc_html__('Debug', 'gabriele-viola-ai-language-switcher'); ?></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[debug]" value="1" <?php checked($o['debug'], '1'); ?>> <?php echo esc_html__('Add diagnostic comments', 'gabriele-viola-ai-language-switcher'); ?></label></td></tr>
                 </table>
 
                 <?php submit_button(); ?>
@@ -513,18 +513,18 @@ final class GV_AI_Translate {
         // Accept both new and legacy nonces for backward compatibility
         $ok = check_ajax_referer('traduttore_translate_texts', 'nonce', false) || check_ajax_referer('gvait_translate_texts', 'nonce', false);
         if (!$ok) {
-            wp_send_json_error(array('message' => __('Invalid nonce.', 'gv-ai-translate')), 403);
+            wp_send_json_error(array('message' => __('Invalid nonce.', 'gabriele-viola-ai-language-switcher')), 403);
         }
 
         $lang = isset($_POST['lang']) ? strtolower(sanitize_key(wp_unslash($_POST['lang']))) : '';
         if (!$lang || $lang === $this->default_lang || !in_array($lang, $this->languages(), true)) {
-            wp_send_json_error(array('message' => __('Invalid language.', 'gv-ai-translate')), 400);
+            wp_send_json_error(array('message' => __('Invalid language.', 'gabriele-viola-ai-language-switcher')), 400);
         }
 
         $raw = isset($_POST['texts']) ? wp_unslash($_POST['texts']) : '[]';
         $texts = json_decode($raw, true);
         if (!is_array($texts)) {
-            wp_send_json_error(array('message' => __('Invalid payload.', 'gv-ai-translate')), 400);
+            wp_send_json_error(array('message' => __('Invalid payload.', 'gabriele-viola-ai-language-switcher')), 400);
         }
 
         $max = intval($this->options['max_text_nodes']);
@@ -556,7 +556,7 @@ final class GV_AI_Translate {
 
         $translations = $this->translate_array_with_fallback($clean, $lang);
         if (!is_array($translations)) {
-            wp_send_json_error(array('message' => __('Translation failed.', 'gv-ai-translate')), 500);
+            wp_send_json_error(array('message' => __('Translation failed.', 'gabriele-viola-ai-language-switcher')), 500);
         }
 
         $ttl = ($this->options['cache_days'] === 'forever') ? 10 * YEAR_IN_SECONDS : max(1, intval($this->options['cache_days'])) * DAY_IN_SECONDS;
@@ -777,7 +777,7 @@ final class GV_AI_Translate {
             $res = wp_remote_get($url, array(
                 'timeout' => 20,
                 'headers' => array(
-                    'User-Agent' => 'Mozilla/5.0 WordPress GV-AI-Translate/' . self::VERSION,
+                    'User-Agent' => 'Mozilla/5.0 WordPress gabriele-viola-ai-language-switcher/' . self::VERSION,
                 ),
             ));
 
@@ -811,3 +811,4 @@ final class GV_AI_Translate {
 }
 
 GV_AI_Translate::instance();
+
